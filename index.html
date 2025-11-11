@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrimeFlix - Premium Streaming</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Netflix Sans', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #141414;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #141414;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e50914;
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            position: relative;
+        }
+
+        .loader::after {
+            content: 'PRIMEFLIX';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #e50914;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Navigation */
+        .navbar {
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            padding: 1.5rem 4%;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-scrolled {
+            background: #141414;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #e50914;
+            text-decoration: none;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #e5e5e5;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.1rem;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #e50914;
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box input {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: white;
+            width: 0;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .search-box.active input {
+            width: 250px;
+            opacity: 1;
+            margin-right: 10px;
+        }
+
+        .search-icon, .notification-icon {
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            padding: 8px;
+        }
+
+        .search-icon:hover, .notification-icon:hover {
+            color: #e50914;
+        }
+
+        .profile {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            background: linear-gradient(45deg, #e50914, #ff6b6b);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+
+        .profile:hover {
+            transform: scale(1.1);
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 85vh;
+            position: relative;
+            margin-top: 80px;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), 
+                        url('./images/hero-banner.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            padding: 0 4%;
+        }
+
+        .hero-content {
+            max-width: 650px;
+            z-index: 2;
+        }
+
+        .hero-badge {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .hero-title {
+            font-size: 4.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            line-height: 1.1;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+            background: linear-gradient(45deg, #fff, #e50914);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            color: #e5e5e5;
+            font-size: 1.1rem;
+            align-items: center;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #ffd700;
+        }
+
+        .hero-description {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            color: #e5e5e5;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .play-btn, .info-btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .play-btn {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .play-btn:hover {
+            background: rgba(255,255,255,0.8);
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(255,255,255,0.3);
+        }
+
+        .info-btn {
+            background: rgba(109, 109, 110, 0.7);
+            color: #ffffff;
+        }
+
+        .info-btn:hover {
+            background: rgba(109, 109, 110, 0.9);
+            transform: scale(1.05);
+        }
+
+        /* Content Sections */
+        .content-section {
+            padding: 4rem 4%;
+            position: relative;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            position: relative;
+            padding-left: 15px;
+        }
+
+        .section-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 25px;
+            background: #e50914;
+            border-radius: 2px;
+        }
+
+        .see-all {
+            color: #e50914;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .see-all:hover {
+            color: #ff6b6b;
+        }
+
+        /* Video Grid */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .video-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .video-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: #e50914;
+            box-shadow: 0 15px 40px rgba(229, 9, 20, 0.4);
+            z-index: 10;
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .video-card:hover .video-thumbnail img {
+            transform: scale(1.1);
+        }
+
+        .video-thumbnail::before {
+            content: '🔒';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            color: rgba(255,255,255,0.9);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+            z-index: 2;
+        }
+
+        .video-card:hover .video-thumbnail::before {
+            opacity: 1;
+        }
+
+        .video-info {
+            padding: 1.5rem;
+        }
+
+        .video-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .video-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #a0a0a0;
+            font-size: 0.9rem;
+        }
+
+        .duration {
+            color: #e50914;
+            font-weight: 600;
+        }
+
+        .premium-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: linear-gradient(45deg, #e50914, #ff6b6b);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            z-index: 3;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        /* Login Prompt */
+        .login-prompt {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-prompt-content {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            padding: 3rem;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            border: 2px solid #e50914;
+            position: relative;
+        }
+
+        .close-prompt {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-prompt:hover {
+            color: #e50914;
+        }
+
+        .prompt-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            color: #e50914;
+        }
+
+        .prompt-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+
+        .prompt-message {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            color: #e5e5e5;
+        }
+
+        .login-redirect-btn {
+            background: linear-gradient(45deg, #e50914, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .login-redirect-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(229, 9, 20, 0.4);
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a1a1a;
+            padding: 4rem 4%;
+            text-align: center;
+            border-top: 1px solid #333;
+            margin-top: 4rem;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .social-links a {
+            color: #a0a0a0;
+            font-size: 1.8rem;
+            transition: color 0.3s ease;
+            padding: 10px;
+        }
+
+        .social-links a:hover {
+            color: #e50914;
+            transform: scale(1.2);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #a0a0a0;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .footer-links a:hover {
+            color: #ffffff;
+        }
+
+        .copyright {
+            color: #666;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.8rem;
+            }
+            
+            .video-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .hero-actions {
+                flex-direction: column;
+            }
+
+            .search-box.active input {
+                width: 180px;
+            }
+
+            .login-prompt-content {
+                padding: 2rem;
+                margin: 1rem;
+            }
+
+            .prompt-title {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <a href="#" class="logo">
+            <i class="fas fa-play-circle"></i>
+            PRIMEFLIX
+        </a>
+        <div class="nav-links">
+            <a href="#"><i class="fas fa-home"></i> Home</a>
+            <a href="#"><i class="fas fa-film"></i> Movies</a>
+            <a href="#"><i class="fas fa-tv"></i> TV Shows</a>
+            <a href="#"><i class="fas fa-star"></i> New & Popular</a>
+            <a href="#"><i class="fas fa-heart"></i> My List</a>
+        </div>
+        <div class="user-actions">
+            <div class="search-box" id="searchBox">
+                <input type="text" placeholder="Search movies...">
+                <div class="search-icon" id="searchIcon">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            <div class="notification-icon">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div class="profile" onclick="showLoginPrompt()">
+                <i class="fas fa-user"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-fire"></i> TRENDING NOW
+            </div>
+            <h1 class="hero-title">FORBIDDEN DESIRES</h1>
+            <div class="hero-meta">
+                <span>2024</span>
+                <span>•</span>
+                <span>2h 18m</span>
+                <span>•</span>
+                <span class="rating">
+                    <i class="fas fa-star"></i> 4.8/5
+                </span>
+                <span>•</span>
+                <span>Thriller, Romance</span>
+            </div>
+            <p class="hero-description">
+                the most sexy videos.
+                
+                Press play to watch the video  .
+            </p>
+            <div class="hero-actions">
+                <button class="play-btn" onclick="showLoginPrompt()">
+                    <i class="fas fa-play"></i> Play Now
+                </button>
+                <button class="info-btn">
+                    <i class="fas fa-info-circle"></i> More Info
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trending Now -->
+    <section class="content-section">
+        <div class="section-header">
+            <h2 class="section-title">Trending Now</h2>
+            <a href="#" class="see-all">
+                View All <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+        <div class="video-grid">
+            <!-- Video Cards -->
+            <div class="video-card" onclick="showLoginPrompt()">
+                <div class="premium-badge">HOT</div>
+                <div class="video-thumbnail">
+                    <img src="./images/trending1.jpg" alt="Secret Affairs">
+                </div>
+                <div class="video-info">
+                    <div class="video-title">
+                        Secret Affairs
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="video-meta">
+                        <span>2024</span>
+                        <span class="duration">2h 15m</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-card" onclick="showLoginPrompt()">
+                <div class="premium-badge">NEW</div>
+                <div class="video-thumbnail">
+                    <img src="./images/trending2.jpg" alt="Dark Obsession">
+                </div>
+                <div class="video-info">
+                    <div class="video-title">
+                        Dark Obsession
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="video-meta">
+                        <span>2024</span>
+                        <span class="duration">1h 55m</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-card" onclick="showLoginPrompt()">
+                <div class="premium-badge">EXCLUSIVE</div>
+                <div class="video-thumbnail">
+                    <img src="./images/trending3.jpg" alt="Hidden Passions">
+                </div>
+                <div class="video-info">
+                    <div class="video-title">
+                        Hidden Passions
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="video-meta">
+                        <span>2024</span>
+                        <span class="duration">2h 08m</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-card" onclick="showLoginPrompt()">
+                <div class="premium-badge">TRENDING</div>
+                <div class="video-thumbnail">
+                    <img src="./images/trending4.jpg" alt="Temptation Games">
+                </div>
+                <div class="video-info">
+                    <div class="video-title">
+                        Temptation Games
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="video-meta">
+                        <span>2024</span>
+                        <span class="duration">1h 42m</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Popular Movies -->
+    <section class="content-section">
+        <div class="section-header">
+            <h2 class="section-title">Popular Movies</h2>
+            <a href="#" class="see-all">
+                View All <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+        <div class="video-grid">
+            <!-- More Video Cards -->
+            <div class="video-card" onclick="showLoginPrompt()">
+                <div class="video-thumbnail">
+                    <img src="./images/popular1.jpg" alt="Midnight Rendezvous">
+                </div>
+                <div class="video-info">
+                    <div class="video-title">
+                        Midnight Rendezvous
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="video-meta">
+                        <span>2023</span>
+                        <span class="duration">2h 05m</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-card" onclick="showLoginPrompt()">
+                <div class="premium-badge">AWARD</div>
+                <div class="video-thumbnail">
+                    <img src="./images/popular2.jpg" alt="Last Summer">
+                </div>
+                <div class="video-info">
+                    <div class="video-title">
+                        Last Summer
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="video-meta">
+                        <span>2024</span>
+                        <span class="duration">1h 58m</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-card" onclick="showLoginPrompt()">
+                <div class="video-thumbnail">
+                    <img src="./images/popular3.jpg" alt="Forbidden Love">
+                </div>
+                <div class="video-info">
+                    <div class="video-title">
+                        Forbidden Love
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="video-meta">
+                        <span>2024</span>
+                        <span class="duration">2h 12m</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-card" onclick="showLoginPrompt()">
+                <div class="premium-badge">NEW</div>
+                <div class="video-thumbnail">
+                    <img src="./images/popular4.jpg" alt="Passionate Nights">
+                </div>
+                <div class="video-info">
+                    <div class="video-title">
+                        Passionate Nights
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="video-meta">
+                        <span>2024</span>
+                        <span class="duration">1h 45m</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Login Prompt -->
+    <div id="loginPrompt" class="login-prompt">
+        <div class="login-prompt-content">
+            <button class="close-prompt" onclick="closeLoginPrompt()">×</button>
+            <div class="prompt-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h2 class="prompt-title">Login Required</h2>
+            <p class="prompt-message">
+                You need to login first to watch this premium content.<br>
+                Please sign in to continue watching.
+            </p>
+            <a href="https://smrturl.co/b05dcb0" class="login-redirect-btn">
+                <i class="fas fa-sign-in-alt"></i> Login First to Watch
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="social-links">
+            <a href="#"><i class="fab fa-facebook"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-youtube"></i></a>
+            <a href="#"><i class="fab fa-tiktok"></i></a>
+        </div>
+        <div class="footer-links">
+            <a href="#">Home</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Cookie Preferences</a>
+            <a href="#">Corporate Information</a>
+            <a href="#">Contact Us</a>
+            <a href="#">Speed Test</a>
+            <a href="#">Legal Notices</a>
+        </div>
+        <div class="copyright">
+            © 2024 PrimeFlix. All rights reserved. This is an educational demonstration only.
+        </div>
+    </footer>
+
+    <script>
+        // Loading screen
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                }, 500);
+            }, 1500);
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 100) {
+                navbar.classList.add('nav-scrolled');
+            } else {
+                navbar.classList.remove('nav-scrolled');
+            }
+        });
+
+        // Search functionality
+        const searchIcon = document.getElementById('searchIcon');
+        const searchBox = document.getElementById('searchBox');
+
+        searchIcon.addEventListener('click', function() {
+            searchBox.classList.toggle('active');
+        });
+
+        // Login prompt functions
+        function showLoginPrompt() {
+            document.getElementById('loginPrompt').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLoginPrompt() {
+            document.getElementById('loginPrompt').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close prompt with ESC key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeLoginPrompt();
+            }
+        });
+
+        // Close prompt when clicking outside
+        document.getElementById('loginPrompt').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeLoginPrompt();
+            }
+        });
+
+        // Scroll animations
+        window.addEventListener('scroll', () => {
+            const cards = document.querySelectorAll('.video-card');
+            cards.forEach(card => {
+                const position = card.getBoundingClientRect();
+                if (position.top < window.innerHeight - 100) {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }
+            });
+        });
+
+        // Initialize elements
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.video-card');
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            });
+        });
+    </script>
+</body>
+</html>
